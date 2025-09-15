@@ -1,0 +1,183 @@
+#include <iostream>
+#include <print>
+
+#include <algorithm>
+
+#include "dealer.h"
+#include "game.h"
+
+#include <thread>
+
+#include "deck.h"
+#include "player.h"
+
+namespace game {
+	void game::print_board(const bool dealer_done)
+	{
+		uint8_t dealer_total = g_dealer_.d_hand.get_hand_total();
+		std::println("################");
+		std::println("Dealer total: {}", dealer_total);
+
+
+		g_dealer_.d_hand.print_hand(dealer_total == 21 || g_dealer_.d_hand.h_cards.size() != 2 || dealer_done);
+		g_player_.p_hand.print_hand();
+
+		std::println("Player total: {}", g_player_.p_hand.get_hand_total());
+		std::println("################");
+		std::cout << "\n";
+	}
+
+	void game::compare_hands(const hand::hand& dealer, const hand::hand& player)
+	{
+		std::println("################");
+		std::println("################");
+
+		const bool dealer_busted = dealer.get_is_busted();
+		const uint8_t dealer_total = dealer.get_hand_total();
+		const bool player_busted = player.get_is_busted();
+		const uint8_t player_total = player.get_hand_total();
+
+		if (dealer_busted && !player_busted)
+		{
+			std::println("Winner is the player! - Dealer busted");
+			return;
+		}
+		
+		if (player_busted && !dealer_busted)
+		{
+			std::println("Winner is the dealer :( - Player busted");
+			return;
+		}
+
+		if (dealer_total > player_total)
+		{
+			std::println("Winner is the dealer :( - {} against {}", dealer_total, player_total);
+			return;
+		}
+
+		if (dealer_total < player_total)
+		{
+			std::println("Winner is the player! - {} against {}", player_total, dealer_total);
+			return;
+		}
+
+		if (dealer_total == player_total)
+		{
+			std::println(R"(Winner is none??! - IT'S A PUSH :O)");
+		}
+	}
+
+
+	void game::init()
+	{
+		g_deck_ = deck::deck();
+		g_deck_.init_deck(6);
+		g_deck_.shuffle_deck();
+
+		g_player_ = player::player();
+		g_dealer_ = dealer::dealer();
+
+		for (int i = 0; i < 4; i++)
+		{
+			if (i % 2 == 0)
+			{
+				g_player_.p_hand.add_card_to_hand(g_deck_.draw_card());
+			}
+			else
+			{
+				g_dealer_.d_hand.add_card_to_hand(g_deck_.draw_card());
+			}
+		}
+
+		print_board();
+	}
+
+	void game::replay()
+	{
+		for (int i = 0; i < 50; i++)
+			std::println("################");
+
+		init();
+		run();
+	}
+
+	void game::run()
+	{
+		do
+		{
+			std::string user_choice;
+			bool valid = false;
+			while (!valid)
+			{
+				std::println("\nYour turn, what will you do? ('Stand' or 'Hit') psst you can just type the first letter");
+				if (!(std::cin >> user_choice)) {
+					std::cin.clear();
+					std::cin.ignore(1000, '\n');
+					std::println("Invalid input, try again.");
+					continue;
+				}
+
+				switch (player::player::parse_action(user_choice))
+				{
+				case player::action::stand:
+					player::player::stand(g_player_.p_hand);
+					valid = true;
+					break;
+
+				case player::action::hit:
+					g_player_.hit(g_deck_.draw_card());
+					print_board();
+					valid = true;
+					break;
+				case player::action::invalid:
+					valid = false;
+					break;
+				}
+			}
+		}
+		while (!(g_player_.p_hand.get_is_standing() || g_player_.p_hand.get_is_busted()));
+
+		do
+		{
+			if (g_player_.p_hand.get_is_busted())
+				break;
+
+			g_dealer_.d_hand.set_ignore_second_card(false);
+			bool is_soft = false;
+			const uint8_t dealer_total = g_dealer_.d_hand.get_hand_total(true);
+			g_dealer_.d_hand.set_hand_total(dealer_total);
+			if (dealer_total >= 17 && g_dealer_.d_hand.h_cards.size() == 2)
+			{
+				for (auto& [suit, rank] : g_dealer_.d_hand.h_cards)
+				{
+					is_soft = rank == card::rank_enum::ace;
+				}
+
+				if (is_soft)
+				{
+					g_dealer_.d_hand.add_card_to_hand(g_deck_.draw_card());
+					print_board(g_dealer_.d_hand.get_is_standing());
+					continue;
+				}
+			}
+			if (dealer_total < 17)
+			{
+				g_dealer_.d_hand.add_card_to_hand(g_deck_.draw_card());
+				print_board(g_dealer_.d_hand.get_is_standing());
+				continue;
+			}
+
+			if (dealer_total >= 17 && !is_soft)
+			{
+				g_dealer_.d_hand.set_is_standing(true);
+				print_board(g_dealer_.d_hand.get_is_standing());
+				break;
+			}
+		}
+		while (!(g_dealer_.d_hand.get_is_standing() || g_dealer_.d_hand.get_is_busted()));
+
+		compare_hands(g_dealer_.d_hand, g_player_.p_hand);
+		std::this_thread::sleep_for(std::chrono::seconds(5));
+		replay();
+	}
+}
