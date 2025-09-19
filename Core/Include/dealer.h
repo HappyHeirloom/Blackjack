@@ -11,9 +11,7 @@ namespace dealer
 
 	class dealer
 	{
-	private:
-
-	public:
-		hand::hand d_hand{ true };
+		public:
+			hand::hand d_hand{ true };
 	};
 }

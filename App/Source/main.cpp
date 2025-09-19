@@ -21,7 +21,7 @@ int main(int argc, char* argv[])
 {
 	auto game = game::game();
 
-	game.init();
+	game.init(6, 1);
 	game.run();
 
 	//deck.shuffle_deck();

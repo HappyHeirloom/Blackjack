@@ -37,7 +37,6 @@ namespace card {
 
 			[[nodiscard]] uint8_t get_card_value() const;
 			static std::string suit_to_string(suit_enum s);
-            static std::string suit_to_unicode(suit_enum s);
             static std::string rank_to_string(rank_enum r);
 
 			[[nodiscard]] std::vector<std::string> print_known_card() const;

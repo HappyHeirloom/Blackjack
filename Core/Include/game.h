@@ -7,17 +7,17 @@ namespace game {
 
 	class game
 	{
+		public:
+			void init(uint8_t amount_of_decks, uint8_t amount_of_players);
+			void replay();
+			void run();
+			void print_board(bool dealer_done = false);
+			static void compare_hands(const hand::hand& dealer, const std::vector<hand::hand>& player_hands);
+
 		private:
 			player::player g_player_;
 			dealer::dealer g_dealer_;
 			deck::deck g_deck_{};
-
-		public:
-			void init();
-			void replay();
-			void run();
-			void print_board(bool dealer_done = false);
-			static void compare_hands(const hand::hand& dealer, const hand::hand& player);
 	};
 
 }

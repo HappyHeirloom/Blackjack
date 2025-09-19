@@ -34,23 +34,6 @@ namespace card {
 		return "Unknown suit";
     }
 
-    std::string card::suit_to_unicode(const suit_enum s)
-    {
-		switch (s)
-		{
-			case suit_enum::hearts:  // NOLINT(bugprone-branch-clone)
-				return "♥";
-			case suit_enum::diamonds:
-				return "♦";
-			case suit_enum::clubs:
-				return "♣";
-			case suit_enum::spades:
-				return "♠";
-		}
-
-		return "?";
-    }
-
     std::string card::rank_to_string(const rank_enum r)
     {
 		switch (r)

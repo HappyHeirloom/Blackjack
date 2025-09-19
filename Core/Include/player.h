@@ -7,18 +7,23 @@ namespace player
 	{
 		hit = 1,
 		stand,
+		split,
 		invalid
 	};
 
 	class player
 	{
-	private:
+		public:
+			std::vector<hand::hand> p_hands;
 
-	public:
-		hand::hand p_hand{ false };
+			player()
+			{
+				p_hands.emplace_back(false);
+			}
 
-		static void stand(hand::hand& hand);
-		void hit(card::card card);
-		static action parse_action(const std::string& input);
+			static void stand(hand::hand& hand);
+			static void hit(card::card card, hand::hand& hand);
+			static hand::hand& split(player& player, hand::hand& hand);
+			static action parse_action(const std::string& input);
 	};
 }

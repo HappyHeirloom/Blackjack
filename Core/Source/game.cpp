@@ -1,17 +1,21 @@
 #include <iostream>
 #include <print>
-
 #include <algorithm>
+#include <thread>
 
 #include "dealer.h"
 #include "game.h"
-
-#include <thread>
-
 #include "deck.h"
 #include "player.h"
 
+namespace
+{
+	uint8_t deck_amount { 6 };
+	uint8_t player_amount { 1 };
+}
+
 namespace game {
+
 	void game::print_board(const bool dealer_done)
 	{
 		uint8_t dealer_total = g_dealer_.d_hand.get_hand_total();
@@ -20,58 +24,64 @@ namespace game {
 
 
 		g_dealer_.d_hand.print_hand(dealer_total == 21 || g_dealer_.d_hand.h_cards.size() != 2 || dealer_done);
-		g_player_.p_hand.print_hand();
 
-		std::println("Player total: {}", g_player_.p_hand.get_hand_total());
+		for (size_t i = 0; i < g_player_.p_hands.size(); i++)
+		{
+			g_player_.p_hands[i].print_hand();
+			std::println("Player hand #{} total: {}", i, g_player_.p_hands[i].get_hand_total());
+		}
+
 		std::println("################");
 		std::cout << "\n";
 	}
 
-	void game::compare_hands(const hand::hand& dealer, const hand::hand& player)
+	void game::compare_hands(const hand::hand& dealer, const std::vector<hand::hand>& player_hands)
 	{
-		std::println("################");
-		std::println("################");
-
 		const bool dealer_busted = dealer.get_is_busted();
 		const uint8_t dealer_total = dealer.get_hand_total();
-		const bool player_busted = player.get_is_busted();
-		const uint8_t player_total = player.get_hand_total();
 
-		if (dealer_busted && !player_busted)
+		for (size_t i = 0; i < player_hands.size(); i++)
 		{
-			std::println("Winner is the player! - Dealer busted");
-			return;
-		}
-		
-		if (player_busted && !dealer_busted)
-		{
-			std::println("Winner is the dealer :( - Player busted");
-			return;
-		}
+			if (player_hands.size() > 1)
+				std::println("\nResult for hand #{}", i);
 
-		if (dealer_total > player_total)
-		{
-			std::println("Winner is the dealer :( - {} against {}", dealer_total, player_total);
-			return;
-		}
+			std::println("################");
+			std::println("################");
 
-		if (dealer_total < player_total)
-		{
-			std::println("Winner is the player! - {} against {}", player_total, dealer_total);
-			return;
-		}
+			const bool player_busted = player_hands[i].get_is_busted();
+			const uint8_t player_total = player_hands[i].get_hand_total();
 
-		if (dealer_total == player_total)
-		{
-			std::println(R"(Winner is none??! - IT'S A PUSH :O)");
+			if (dealer_busted && !player_busted)
+			{
+				std::println("Winner is the player! - Dealer busted");
+			}			
+			else if (player_busted && !dealer_busted)
+			{
+				std::println("Winner is the dealer :( - Player busted");
+			}
+			else if (dealer_total > player_total)
+			{
+				std::println("Winner is the dealer :( - {} against {}", dealer_total, player_total);
+			}
+			else if (dealer_total < player_total)
+			{
+				std::println("Winner is the player! - {} against {}", player_total, dealer_total);
+			}
+			else if (dealer_total == player_total)
+			{
+				std::println(R"(Winner is none??! - IT'S A PUSH :O)");
+			}
 		}
 	}
 
 
-	void game::init()
+	void game::init(const uint8_t amount_of_decks, const uint8_t amount_of_players)
 	{
+		deck_amount = amount_of_decks;
+		player_amount = amount_of_players;
+
 		g_deck_ = deck::deck();
-		g_deck_.init_deck(6);
+		g_deck_.init_deck(amount_of_decks);
 		g_deck_.shuffle_deck();
 
 		g_player_ = player::player();
@@ -81,7 +91,7 @@ namespace game {
 		{
 			if (i % 2 == 0)
 			{
-				g_player_.p_hand.add_card_to_hand(g_deck_.draw_card());
+				g_player_.p_hands[0].add_card_to_hand(g_deck_.draw_card());
 			}
 			else
 			{
@@ -97,50 +107,74 @@ namespace game {
 		for (int i = 0; i < 50; i++)
 			std::println("################");
 
-		init();
+		init(deck_amount, player_amount);
 		run();
 	}
 
 	void game::run()
 	{
-		do
+		// Using indices since we may add new hands during iteration (action::split)
+		for (size_t i = 0; i < g_player_.p_hands.size(); i++)  // NOLINT(modernize-loop-convert)
 		{
-			std::string user_choice;
-			bool valid = false;
-			while (!valid)
+			do
 			{
-				std::println("\nYour turn, what will you do? ('Stand' or 'Hit') psst you can just type the first letter");
-				if (!(std::cin >> user_choice)) {
-					std::cin.clear();
-					std::cin.ignore(1000, '\n');
-					std::println("Invalid input, try again.");
-					continue;
-				}
-
-				switch (player::player::parse_action(user_choice))
+				std::string user_choice;
+				bool valid = false;
+				while (!valid)
 				{
-				case player::action::stand:
-					player::player::stand(g_player_.p_hand);
-					valid = true;
-					break;
+					std::println("\nFor hand #{}, what will you do? ('Stand (st)', 'Hit(h)' or 'Split(sp)') ", i);
+					if (!(std::cin >> user_choice)) {
+						std::cin.clear();
+						std::cin.ignore(1000, '\n');
+						std::println("Invalid input, try again.");
+						continue;
+					}
 
-				case player::action::hit:
-					g_player_.hit(g_deck_.draw_card());
-					print_board();
-					valid = true;
-					break;
-				case player::action::invalid:
-					valid = false;
-					break;
+					switch (player::player::parse_action(user_choice))
+					{
+					case player::action::stand:
+						player::player::stand(g_player_.p_hands[i]);
+						valid = true;
+						break;
+
+					case player::action::hit:
+						player::player::hit(g_deck_.draw_card(), g_player_.p_hands[i]);
+						print_board();
+						valid = true;
+						break;
+						 
+					case player::action::split: {
+						if (g_player_.p_hands[i].h_cards.size() != 2 || 
+							g_player_.p_hands[i].h_cards[0].get_card_value() != g_player_.p_hands[i].h_cards[1].get_card_value()
+							)
+						{
+							std::println("Cannot split when both cards aren't the same value");
+							break;
+						}
+
+						auto& new_hand{ player::player::split(g_player_, g_player_.p_hands[i]) };
+						g_player_.p_hands[i].add_card_to_hand(g_deck_.draw_card());
+						new_hand.add_card_to_hand(g_deck_.draw_card());
+						print_board();
+						valid = true;
+						break;
+					}
+
+					case player::action::invalid:
+						valid = false;
+						break;
+					}
 				}
-			}
+
+			} while (!(g_player_.p_hands[i].get_is_standing() || g_player_.p_hands[i].get_is_busted()));
 		}
-		while (!(g_player_.p_hand.get_is_standing() || g_player_.p_hand.get_is_busted()));
 
 		do
 		{
-			if (g_player_.p_hand.get_is_busted())
+			if (std::ranges::all_of(g_player_.p_hands, [](const hand::hand& hand) { return hand.get_is_busted(); }))
+			{
 				break;
+			}
 
 			g_dealer_.d_hand.set_ignore_second_card(false);
 			bool is_soft = false;
@@ -176,7 +210,7 @@ namespace game {
 		}
 		while (!(g_dealer_.d_hand.get_is_standing() || g_dealer_.d_hand.get_is_busted()));
 
-		compare_hands(g_dealer_.d_hand, g_player_.p_hand);
+		compare_hands(g_dealer_.d_hand, g_player_.p_hands);
 		std::this_thread::sleep_for(std::chrono::seconds(5));
 		replay();
 	}

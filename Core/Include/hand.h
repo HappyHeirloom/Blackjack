@@ -2,22 +2,15 @@
 
 #include <vector>
 #include "card.h"
-#include "deck.h"
 
 namespace hand {
 
 	class hand {
-		private:
-			bool h_is_dealer_ = false;
-			bool h_ignore_second_card_{ true };
-			uint8_t h_hand_total_{ 0 };
-			bool h_standing_{ false };
-			bool h_busted_{ false };
-			
 		public:
 			explicit hand(const bool is_dealer = false) :
-							h_is_dealer_(is_dealer),
-							h_ignore_second_card_(is_dealer) {}
+				h_is_dealer_(is_dealer),
+				h_ignore_second_card_(is_dealer) {
+			}
 
 			std::vector<card::card> h_cards;
 			void print_hand(bool show_second_card = true);
@@ -31,6 +24,13 @@ namespace hand {
 			void add_card_to_hand(card::card card);
 			[[nodiscard]] auto get_ignore_second_card() const -> bool;
 			void set_ignore_second_card(bool value);
+
+		private:
+			bool h_is_dealer_ = false;
+			bool h_ignore_second_card_{ true };
+			uint8_t h_hand_total_{ 0 };
+			bool h_standing_{ false };
+			bool h_busted_{ false };
 	};
 
 }

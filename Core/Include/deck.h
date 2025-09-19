@@ -30,17 +30,16 @@ namespace deck {
     };
 
     class deck {
+	    public:
+	        void init_deck(uint8_t deck_amount);
+	        void shuffle_deck();
+	        card::card draw_card();
+	        void print_cards();
+
         private:
             std::vector<card::card> d_cards_{ 0 };
             std::vector<card::card> d_discard_pile_{ 0 };
             int d_next_card_index_ = { 0 };
-
-
-        public:
-            void init_deck(uint8_t deck_amount);
-            void shuffle_deck();
-            card::card draw_card();
-            void print_cards();
     };
 
 }
