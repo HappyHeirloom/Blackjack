@@ -101,6 +101,12 @@ namespace hand {
             h_standing_ = true;
             h_busted_ = true;
         }
+
+        if (h_cards.size() == 2 && h_hand_total_ == 21)
+        {
+            h_standing_ = true;
+            h_blackjack = true;
+        }
            
 	}
 
@@ -112,5 +118,10 @@ namespace hand {
     void hand::set_ignore_second_card(const bool value)
     {
         h_ignore_second_card_ = value;
+    }
+
+    bool hand::get_has_blackjack() const
+    {
+        return h_blackjack;
     }
 }

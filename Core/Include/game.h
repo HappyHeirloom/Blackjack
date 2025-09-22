@@ -9,8 +9,8 @@ namespace game {
 	{
 		public:
 			void init(uint8_t amount_of_decks, uint8_t amount_of_players);
-			void replay();
 			void run();
+			void replay();
 			void print_board(bool dealer_done = false);
 			static void compare_hands(const hand::hand& dealer, const std::vector<hand::hand>& player_hands);
 
