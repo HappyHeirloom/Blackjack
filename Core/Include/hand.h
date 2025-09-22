@@ -24,7 +24,7 @@ namespace hand {
 			void add_card_to_hand(card::card card);
 			[[nodiscard]] auto get_ignore_second_card() const -> bool;
 			void set_ignore_second_card(bool value);
-			bool get_has_blackjack() const;
+			[[nodiscard]] bool get_has_blackjack() const;
 
 		private:
 			bool h_is_dealer_{ false };
@@ -32,7 +32,7 @@ namespace hand {
 			uint8_t h_hand_total_{ 0 };
 			bool h_standing_{ false };
 			bool h_busted_{ false };
-			bool h_blackjack{ false };
+			bool h_blackjack_{ false };
 	};
 
 }

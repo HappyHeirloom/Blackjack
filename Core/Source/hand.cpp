@@ -105,7 +105,7 @@ namespace hand {
         if (h_cards.size() == 2 && h_hand_total_ == 21)
         {
             h_standing_ = true;
-            h_blackjack = true;
+            h_blackjack_ = true;
         }
            
 	}
@@ -122,6 +122,6 @@ namespace hand {
 
     bool hand::get_has_blackjack() const
     {
-        return h_blackjack;
+        return h_blackjack_;
     }
 }
